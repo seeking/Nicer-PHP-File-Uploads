@@ -1,7 +1,9 @@
 <?php
 
-class NonUploadedFile extends Exception {}
-class CouldNotMoveFile extends Exception {}
+class NonUploadedFile       extends Exception {}
+class CouldNotMoveFile      extends Exception {}
+class DirectoryDoesNotExist extends Exception {}
+class DirectoryUnwritable   extends Exception {}
 
 class File {
     /* File attributes: */
@@ -44,7 +46,7 @@ class File {
     /** Methods for determining file type / info: **/
     private function checkFileType($mime_type_segment, $file_extensions) {
         // Check mime type:
-        if (!$empty($this->mime_type)) {
+        if (!empty($this->mime_type)) {
             $first = substr($this->mime_type, 0, strpos($this->mime_type, '/'));
             if ($first != $mime_type_segment) {
                 return false;
@@ -75,7 +77,32 @@ class File {
     
     
     /** Methods for saving file: **/
-    public function save($location, $allow_non_uploaded_files = false) {
+    private function generateRandomName($directory) {
+        if ($directory[strlen($directory) - 1] != DIRECTORY_SEPARATOR) {
+            $directory .= DIRECTORY_SEPARATOR;
+        }
+        
+        $filename = "";
+        do {
+            $filename = md5(time() . rand()) . '.' . $this->file_extension;
+        } while (file_exists($directory . $filename));
+        
+        return $filename;
+    }
+    
+    
+    public function setMovedName($filename) {
+        $this->random_name = $filename;
+        return $this;
+    }
+    
+    
+    public function save($directory, $allow_non_uploaded_files = false) {
+        // Add slash to end of directory if required:
+        if ($directory[strlen($directory) - 1] != DIRECTORY_SEPARATOR) {
+            $directory .= DIRECTORY_SEPARATOR;
+        }
+        
         // Unless flag set, check that file was uploaded:
         if (!$allow_non_uploaded_files) {
             if (!is_uploaded_file($this->tmp_name)) {
@@ -83,14 +110,24 @@ class File {
             }
         }
         
-        // Check new location exists:
-        if (!is_dir($location)) {
-            
+        // Check directory exists:
+        if (!is_dir($directory)) {
+            throw new DirectoryDoesNotExist;
+        }
+        
+        // Check it is writable:
+        if (!is_writable($directory)) {
+            throw new DirectoryUnwritable;
+        }
+        
+        // Generate random name:
+        if (!isset($this->random_name)) {
+            $this->random_name = $this->generateRandomName($directory);
         }
         
         // Move the file:
-        if (move_uploaded_file($this->tmp_name, $location)) {
-            return true;
+        if (@move_uploaded_file($this->tmp_name, $directory . $this->random_name)) {
+            return $this->random_name;
         } else {
             throw new CouldNotMoveFile;
         }
