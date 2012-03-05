@@ -6,7 +6,11 @@
     require "FileUploads.php";
     
     foreach ($_FILES as $file) {
-        $file->save('/home/dotty/Test/');
+        if ($file->isImage()) {
+            $file->save('/home/tdavies/Test');
+        } else {
+            echo "Only images are allowed!";
+        }
     }
     
     echo "<pre>";
