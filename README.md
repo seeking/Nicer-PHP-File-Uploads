@@ -1,7 +1,8 @@
 # Nicer PHP File Uploads
 
 File uploads in PHP are pretty easy, but they're also a bit of a hassle.
-This library takes the $_FILES array and replaces it with an array of file objects.
+This library takes the $_FILES array and replaces it with an array of file
+objects.
 
 ## But why?
 - So you can easily detect whether a file is an image, video, etc.
@@ -10,6 +11,29 @@ This library takes the $_FILES array and replaces it with an array of file objec
 - So you can squash security issues related to file uploads
 - So you don't have to constantly reinvent the wheel.
 
-## Issues
-Right now, this library is in development. It's not quite ready to be used but soon
-at least some of the functionality will be present.
+## How to use
+If you're creating a new project, you should be fine to just drop the code in
+using an include at the top of your application structure. This will
+automatically convert the $_FILES array to an array of objects.
+
+This functionality may break existing software so you may wish to remove the
+snippet of code that does this automatically. It can be found at the very bottom
+of the file. Just remove that and there should be no compatibility issues.
+
+
+## Examples
+    
+A regular use of the library:
+
+    if (!$_FILES['foo']->hasError() && $_FILES['foo']->isImage()) {
+      $_FILES['foo']->save('/home/websites/uploaded_files/');
+    }
+
+An example of how to use the library without the automatic $_FILES array
+conversion:
+    
+    $foo = new File($_FILES['foo']);
+    
+    if (!$foo->hasError() && $foo->isImage()) {
+      $foo->save('/home/websites/uploaded_files/');
+    }
