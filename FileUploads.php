@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Nicer PHP File Uploads v0.1
+ * Nicer PHP File Uploads
  *
  * Nicer PHP File Uploads loops through the $_FILES variable and replaces the
  * sub-arrays with File objects. From then on, it's much easier to manipulate
@@ -9,7 +9,7 @@
  *
  * An example of how simple it is to save a file upload, safely:
  *
- *      if ($_FILES['foo']->isImage()) {
+ *      if (!$_FILES['foo']->hasError() && $_FILES['foo']->isImage()) {
  *          $_FILES['foo']->save('/home/websites/uploaded_files/');
  *      }
  *
@@ -24,6 +24,27 @@ class NonUploadedFile       extends Exception {}
 class CouldNotMoveFile      extends Exception {}
 class DirectoryDoesNotExist extends Exception {}
 class DirectoryUnwritable   extends Exception {}
+
+
+/** Set file upload constants for compatibility with earlier PHP versions: **/
+$error_codes = array(
+    0 => "UPLOAD_ERR_OK",
+    1 => "UPLOAD_ERR_INI_SIZE",
+    2 => "UPLOAD_ERR_FORM_SIZE",
+    3 => "UPLOAD_ERR_PARTIAL",
+    4 => "UPLOAD_ERR_NO_FILE",
+    6 => "UPLOAD_ERR_NO_TMP_DIR",  // Introduced in PHP 4.3.10 and PHP 5.0.3.
+    7 => "UPLOAD_ERR_CANT_WRITE",  // Introduced in PHP 5.1.0.
+    8 => "UPLOAD_ERR_EXTENSION",   // Introduced in PHP 5.2.0.
+);
+
+foreach ($error_codes as $code => $constant) {
+    if (!defined($constant)) {
+        define($constant, $code);
+    }
+}
+
+unset($error_codes, $code, $constant);
 
 
 /**
@@ -52,6 +73,7 @@ class File {
     );
 
 
+
     /**
      * Create File object. Expects a sub-array from $_FILES.
      * @param array $data Sub-array from $_FILES.
@@ -73,8 +95,49 @@ class File {
         return $this;
     }
 
+    
+    /**
+     * Returns true if the file uploaded with error.
+     * @return boolean True if file has error
+     */
+    public function hasError() {
+        if ($this->error == UPLOAD_ERR_OK) {
+            return false;
+        }
+        return true;
+    }
 
 
+    /**
+     * Return error message if there is one.
+     * @return string
+     */
+    public function getErrorMessage() {
+        // Check file upload error:
+        switch ($this->error) {
+            case UPLOAD_ERR_INI_SIZE:
+                return 'The uploaded file exceeds the upload_max_filesize ' .
+                       'directive in php.ini.';
+            case UPLOAD_ERR_FORM_SIZE:
+                return 'The uploaded file exceeds the MAX_FILE_SIZE ' .
+                       'directive that was specified in the HTML form.';
+            case UPLOAD_ERR_PARTIAL:
+                return 'The uploaded file was only partially uploaded.';
+            case UPLOAD_ERR_NO_FILE:
+                return 'No file was uploaded.';
+            case UPLOAD_ERR_NO_TMP_DIR:
+                return 'Missing a temporary folder.';
+            case UPLOAD_ERR_CANT_WRITE:
+                return 'Failed to write file to disk.';
+            case UPLOAD_ERR_EXTENSION:
+                return 'A PHP extension stopped the file upload.';
+            case UPLOAD_ERR_OK:
+            default:
+                return false;
+        }
+    }
+    
+    
     /** Methods for determining file type / info: **/
 
     /**
