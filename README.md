@@ -26,7 +26,7 @@ of the file. Just remove that and there should be no compatibility issues.
 A regular use of the library:
 
     if (!$_FILES['foo']->hasError() && $_FILES['foo']->isImage()) {
-      $_FILES['foo']->save('/home/websites/uploaded_files/');
+        $new_filename = $_FILES['foo']->save('/home/websites/uploaded_files/');
     }
 
 An example of how to use the library without the automatic $_FILES array
@@ -35,5 +35,5 @@ conversion:
     $foo = new File($_FILES['foo']);
     
     if (!$foo->hasError() && $foo->isImage()) {
-      $foo->save('/home/websites/uploaded_files/');
+        $new_filename = $foo->save('/home/websites/uploaded_files/');
     }
